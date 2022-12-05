@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.2.0/mustache.min.js"></script>
+	<meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chloe Raymond's IT 4403 Labs</title>
+    <link rel="stylesheet" href="style4.css">
+	<script id="booktemplate" type="text/template">
+		{{#items}}
+		<div class='bookdiv' id={{id}}>
+			<a href="javascript:;" class='googlebook' bookid={{id}} float='right'>{{volumeInfo.title}}</a>
+			<img src='{{volumeInfo.imageLinks.smallThumbnail}}' width='100' class='googlebook' data-value='{{id}}' float='left'/>
+		</div>
+		{{/items}}
+    </script>
+	<script id="booktemplate2" type="text/template">
+		{{#items}}
+		<div class='bookdiv2' id={{id}}>
+			<a href="javascript:;" class='googlebook' bookid={{id}}>{{volumeInfo.title}}</a>
+			<img src='{{volumeInfo.imageLinks.smallThumbnail}}' width='100' class='googlebook' data-value='{{id}}' float='left'/>
+		</div>
+		{{/items}}
+    </script>
+	<script id="bookinfotemplate" type="text/template">
+        {{#volumeInfo}}
+        <h3>Book Info</h3>
+        <p id="info">
+			<strong>Title: </strong>{{title}} <br>
+			<strong>Link: </strong><a href= {{previewLink}}>{{previewLink}}</a> <br>
+			<strong>Author(s): </strong>{{#authors}}
+                {{authors}} <br>
+            {{/authors}}
+            <strong>Publisher: </strong>{{publisher}} <br>
+            <strong>Date Published: </strong>{{publishedDate}} <br>
+            <strong>ISBN: </strong>{{industryIdentifiers.0.identifier}}<br>
+            <strong>ISBN-13: </strong>{{industryIdentifiers.1.identifier}}<br>
+            <strong>Page Count: </strong>{{pageCount}} <br>
+        </p>
+		<p><strong>Description: </strong>{{description}}</p>
+        {{/volumeInfo}}
+	</script>
+</head>
+<body>
+	<h1 id="title"></h1>
+	<h2>Google Book Search</h2>
+	<div>
+		<label>Search for a book title: </label>
+		<input id="myInput" type="text" placeholder="Search...">
+		<button id="searchbutton">Go!</button>
+	</div>
+	<h2 id="searchresults"></h2>
+	<div id="layout" style="float: right">
+		<button id="listlayout">List Layout</button>
+		<button id="gridlayout">Grid Layout</button>
+	</div>
+	<div id="results" style="display: flex; flex-wrap: wrap;"></div>
+	<div id="pagenumbers" style="float: right">
+		<label>Go to Page: </label>
+		<button class="pagebutton" value="1">1</button>
+		<button class="pagebutton" value="2">2</button>
+		<button class="pagebutton" value="3">3</button>
+		<button class="pagebutton" value="4">4</button>
+		<button class="pagebutton" value="5">5</button>
+	</div>
+	<div id="bookinfo"></div>
+	<br>
+	<br>
+	<h2>My Bookshelf</h2>
+	<div id="layout2" style="float: right">
+		<button id="listlayout2">List Layout</button>
+		<button id="gridlayout2">Grid Layout</button>
+	</div>
+	<div id="bookshelfresults" style="display: flex; flex-wrap: wrap;"></div>
+	<div id="bookshelfinfo"></div>
+
+
+<script>
+    $(document).ready(function(){
+		var listenabled = false;
+		var listenabled2 = false;
+		$("#results").hide();
+		$("#pagenumbers").hide();
+		$("#layout").hide();
+		$("#bookinfo").hide();
+		$("#bookshelfinfo").hide();
+		$("#searchbutton").click(function(){
+			var current_page = 1;
+			searchBooks(current_page);
+		});
+		$(".pagebutton").click(function(){
+			var current_page = $(this).val();
+			searchBooks(current_page);
+		});
+		function searchBooks(pagenum){
+			var currentpage = pagenum
+			
+			$('#results').css('display', 'flex');
+			$('#pagenumbers').css('display', 'block');
+			$('#layout').css('display', 'block');
+			var term = $('#myInput').val().toLowerCase(); //or get the value from a textbox user input; you can Google how to do it.
+			var parameter = '';
+			if (currentpage == "1"){
+				parameter = "?q="+term+"&startIndex=0&maxResults=10"; 
+			}
+			else if (currentpage == "2"){
+				parameter = "?q="+term+"&startIndex=10&maxResults=10"; 
+			}
+			else if (currentpage == "3"){
+				parameter = "?q="+term+"&startIndex=20&maxResults=10"; 
+			}
+			else if (currentpage == "4"){
+				parameter = "?q="+term+"&startIndex=30&maxResults=10"; 
+			}
+			else if (currentpage == "5"){
+				parameter = "?q="+term+"&startIndex=40&maxResults=10"; 
+			}
+			var service_point="https://www.googleapis.com/books/v1/volumes/"+parameter;
+			$.getJSON(service_point, function (json)
+			{
+				console.log(json);
+				var total=json.totalItems;
+				$("#total").text(total); 
+			
+				var resultHTML="";
+				var template = $('#booktemplate').html();
+				var resultHTML = Mustache.render(template, json);
+				if (currentpage == "1"){
+					$("#searchresults").html("Searched '"+term+"'; Total results: "+total+"<p>The first page of the top 50 results is displayed here (1-10).</p>");
+				}
+				else if (currentpage == "2"){
+					$("#searchresults").html("Searched '"+term+"'; Total results: "+total+"<p>The second page of the top 50 results is displayed here (11-20).</p>");
+				}
+				else if (currentpage == "3"){
+					$("#searchresults").html("Searched '"+term+"'; Total results: "+total+"<p>The third page of the top 50 results is displayed here (21-30).</p>");
+				}
+				else if (currentpage == "4"){
+					$("#searchresults").html("Searched '"+term+"'; Total results: "+total+"<p>The fourth page of the top 50 results is displayed here (31-40).</p>"); 
+				}
+				else if (currentpage == "5"){
+					$("#searchresults").html("Searched '"+term+"'; Total results: "+total+"<p>The fifth page of the top 50 results is displayed here (41-50).</p>"); 
+				}
+				$("#results").html(resultHTML); 
+				if (listenabled == false){
+					$(".bookdiv").css("width", "20%");
+					$("#results").attr("data-layout","Grid");
+				}
+				else {
+					$(".bookdiv").css("width", "99%");
+					$("#results").attr("data-layout","List");
+				}
+				$(".googlebook").click(function (){
+					var bookid = $(this).attr("bookid");
+					console.log(bookid);
+					bookInform(bookid);
+				});
+			});
+		}
+				
+		function bookInform(id){
+			var bookservice_point = "https://www.googleapis.com/books/v1/volumes/" + id;
+			$("#bookinfo").css('display', "block");
+			$.getJSON(bookservice_point, function (json)
+					{
+						var resultHTML="";
+						var template = $('#bookinfotemplate').html();
+				        var resultHTML = Mustache.render(template, json);
+						$("#bookinfo").html(resultHTML);
+					}); 
+		}
+		$("#gridlayout").click(function (){
+			$(".bookdiv").css("width", "20%");
+			$("#results").attr("data-layout","Grid");
+			listenabled = false;
+		});
+		$("#listlayout").click(function (){
+			$(".bookdiv").css("width", "99%");
+			$("#results").attr("data-layout","List");
+			listenabled = true;	
+		});
+		$("#gridlayout2").click(function (){
+			$(".bookdiv2").css("width", "20%");
+			$("#bookshelfresults").attr("data-layout","Grid");
+			listenabled2 = false;
+		});
+		$("#listlayout2").click(function (){
+			$(".bookdiv2").css("width", "99%");
+			$("#bookshelfresults").attr("data-layout","List");
+			listenabled2 = true;	
+		});
+		
+		
+		
+		var service_point1 = "https://www.googleapis.com/books/v1/users/106114825798362862008/bookshelves/1001/";
+        var service_point2 = "https://www.googleapis.com/books/v1/users/106114825798362862008/bookshelves/1001/volumes";
+
+        $.getJSON(service_point2, function (json2) {
+
+			var resultHTML="";
+			var template = $('#booktemplate2').html();
+			var resultHTML = Mustache.render(template, json2);
+			$("#bookshelfresults").html(resultHTML); 
+			if (listenabled2 == false){
+				$(".bookdiv2").css("width", "20%");
+				$("#bookshelfresults").attr("data-layout","Grid");
+			}
+			else {
+				$(".bookdiv2").css("width", "99%");
+				$("#bookshelfresults").attr("data-layout","List");
+			}
+			$(".googlebook").click(function (){
+				var bookid = $(this).attr("bookid");
+				console.log(bookid);
+				bookshelfInform(bookid);
+			});
+            
+		});
+		function bookshelfInform(id){
+			var bookservice_point = "https://www.googleapis.com/books/v1/volumes/" + id;
+			$("#bookshelfinfo").css('display', "block");
+			$.getJSON(bookservice_point, function (json)
+					{
+						var resultHTML="";
+						var template = $('#bookinfotemplate').html();
+				        var resultHTML = Mustache.render(template, json);
+						$("#bookshelfinfo").html(resultHTML);
+					}); 
+		}
+        
+    });
+</script>
+
+
+
+</body>
+
+</html>
